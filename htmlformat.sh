@@ -1,30 +1,45 @@
-#!/bin/bash +x
+#!/bin/bash +cx
 # 
 
 
 if [[ -z "$1" || -z "$2" || ! -f "$1" ]];
   then
+    
     echo "htmlformat.sh [file to format] [file to write output]";
     exit 1
 fi
 
+echo "Start processing.."
 
-
-
-
+echo "Add new lines"
+n=0
 while read -r line; do 
-   line2=`echo $line | sed  '/\(.*\)<\([a-zA-Z\.\-\_\:\*\@\#\$\/]*\)>\(.*\)/\1<\2\>a\
-\3/'`
-   n=0
-   echo "LINE2 : $line2"
-   printf %s "$line2" | while IFS= read -r line3;  do
-      echo "LIBE 3 $line3"
-   done 
-#  while read -r line3; do
-#      line4=echo $line3 | sed 's/^\(\s*\)<\([a-zA-Z\.\-\_\:\*\@\#\$\/]*\)>\(.*\)/\s{(( n*3 ))}<\2>\3/g'
-#      echo $line4
-#      echo $line4 >> $2
+#   echo "Got line $line"
+   IFS=$'\n';line2=$(echo "$line" | sed -e 's/\(.*\)\<\(.*\)\>\(.*\)/\1\\\n<\2>\\\n\3/g'|sed -e  's/\\\n\\\n/\\\n/g')
+#   echo "   add indents"
+cr='
+'
+indent=""
+for line3 in ${line2//\\\n/$cr}
+do
+#        echo "$(( ++c )) |$line3|"
+#       indent=""
+       if [[ "$line3" =~ ^"<".*">"$ ]]; then
+#          echo "got tag"
+          if [[ "$line3" == \<\/* ]]; then
+            indent=$(printf "%$(((n-1)*3))s")
+             (( --n ))
+          else
+             (( ++n ))
+             indent=$(printf "%$(((n-1)*3))s")
+          fi
+           
+       fi
+       echo "$indent$line3" >> $2
+           
+       
+	
+    done
+done  < $1
 
-#      (( n++ ))
-#   done < <(line2) 
-done < $1
+cat $2
